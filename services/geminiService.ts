@@ -143,7 +143,11 @@ export const GeminiService = {
     2. Real-world analogy.
     3. Concrete example.
     4. A prompt describing a diagram that would help explain this.
-    5. REAL, VALID external resources (YouTube, Blogs, Docs).
+    5. External Resources - CRITICAL INSTRUCTION:
+       - DO NOT generate specific deep links that might be broken (404).
+       - For Videos: Generate a YouTube Search URL. Format: "https://www.youtube.com/results?search_query=" + encoded keywords.
+       - For Docs: Use the main documentation homepage or a highly stable Wikipedia link.
+       - Ensure all links are 100% accessible public URLs.
     6. A short 3-question quiz to verify understanding.
     `;
 

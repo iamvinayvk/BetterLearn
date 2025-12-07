@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Question } from '../types';
-import { CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, ArrowLeft, BarChart2 } from 'lucide-react';
 
 interface Props {
   questions: Question[];
@@ -11,104 +11,157 @@ interface Props {
 }
 
 export const QuizView: React.FC<Props> = ({ questions, title, subTitle, onComplete, isSubmitting }) => {
+  const [currentInfoIndex, setCurrentInfoIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [showResults, setShowResults] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
 
-  const handleOptionSelect = (qId: string, optionIndex: number) => {
-    if (showResults) return;
-    setAnswers(prev => ({ ...prev, [qId]: optionIndex }));
+  // If currently reviewing, show the result list
+  if (isReviewing) {
+    const results = questions.map(q => ({
+        questionId: q.id,
+        correct: answers[q.id] === q.correctIndex
+    }));
+    const correctCount = results.filter(r => r.correct).length;
+    const score = Math.round((correctCount / questions.length) * 100);
+
+    return (
+      <div className="max-w-3xl mx-auto p-6 pb-20 animate-fade-in">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 mb-4 border-2 border-indigo-100">
+            <span className="text-3xl font-bold text-indigo-600">{score}%</span>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">Quiz Completed!</h2>
+          <p className="text-slate-500">Review your answers before continuing.</p>
+        </div>
+
+        <div className="space-y-6">
+          {questions.map((q, idx) => {
+            const userAnswer = answers[q.id];
+            const isCorrect = userAnswer === q.correctIndex;
+
+            return (
+              <div key={q.id} className={`p-6 rounded-xl border ${isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                <div className="flex items-start gap-3 mb-2">
+                  {isCorrect ? <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" /> : <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />}
+                  <div>
+                    <h3 className="font-semibold text-slate-800">{q.question}</h3>
+                    <p className="text-sm mt-1 text-slate-600">
+                      Your answer: <span className="font-medium">{q.options?.[userAnswer]}</span>
+                    </p>
+                    {!isCorrect && (
+                       <p className="text-sm mt-1 text-slate-600">
+                         Correct answer: <span className="font-medium text-green-700">{q.options?.[q.correctIndex!]}</span>
+                       </p>
+                    )}
+                  </div>
+                </div>
+                {q.explanation && (
+                  <div className="mt-3 pl-9 text-sm text-slate-700 bg-white/50 p-3 rounded-lg">
+                    <strong>Insight:</strong> {q.explanation}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 flex justify-center z-10">
+          <button
+            onClick={() => onComplete(results)}
+            disabled={isSubmitting}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-12 rounded-full shadow-lg flex items-center gap-2 transition-all w-full max-w-md justify-center"
+          >
+            {isSubmitting ? "Analyzing Progress..." : "Complete & Continue"}
+            {!isSubmitting && <ArrowRight className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Active Quiz Flow ---
+  
+  const currentQuestion = questions[currentInfoIndex];
+  const progress = ((currentInfoIndex) / questions.length) * 100;
+  const hasAnsweredCurrent = answers[currentQuestion.id] !== undefined;
+
+  const handleNext = () => {
+    if (currentInfoIndex < questions.length - 1) {
+      setCurrentInfoIndex(prev => prev + 1);
+    } else {
+      setIsReviewing(true);
+    }
   };
-
-  const handleSubmit = () => {
-    setShowResults(true);
-    // Calculate results after a brief delay to show UI feedback
-    setTimeout(() => {
-        const results = questions.map(q => ({
-            questionId: q.id,
-            correct: answers[q.id] === q.correctIndex
-        }));
-        onComplete(results);
-    }, 2000);
-  };
-
-  const allAnswered = questions.every(q => answers[q.id] !== undefined);
 
   return (
-    <div className="max-w-3xl mx-auto p-6 pb-20">
+    <div className="max-w-2xl mx-auto p-6 h-full flex flex-col">
+      {/* Header with Progress */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
-        {subTitle && <p className="text-slate-500 mt-2">{subTitle}</p>}
-      </div>
-
-      <div className="space-y-6">
-        {questions.map((q, idx) => {
-          const userAnswer = answers[q.id];
-          const isCorrect = userAnswer === q.correctIndex;
-          
-          return (
-            <div key={q.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-start gap-4 mb-4">
-                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-600 font-medium text-sm">
-                  {idx + 1}
-                </span>
-                <h3 className="text-lg font-medium text-slate-800 pt-1">{q.question}</h3>
-              </div>
-
-              <div className="space-y-3 pl-12">
-                {q.options?.map((opt, optIdx) => {
-                  let btnClass = "w-full text-left p-4 rounded-lg border-2 transition-all ";
-                  
-                  if (showResults) {
-                     if (optIdx === q.correctIndex) {
-                       btnClass += "border-green-500 bg-green-50 text-green-900";
-                     } else if (userAnswer === optIdx) {
-                       btnClass += "border-red-500 bg-red-50 text-red-900";
-                     } else {
-                       btnClass += "border-slate-100 opacity-50";
-                     }
-                  } else {
-                    if (userAnswer === optIdx) {
-                      btnClass += "border-indigo-600 bg-indigo-50 text-indigo-900";
-                    } else {
-                      btnClass += "border-slate-100 hover:border-indigo-200 hover:bg-slate-50";
-                    }
-                  }
-
-                  return (
-                    <button
-                      key={optIdx}
-                      onClick={() => handleOptionSelect(q.id, optIdx)}
-                      className={btnClass}
-                      disabled={showResults}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{opt}</span>
-                        {showResults && optIdx === q.correctIndex && <CheckCircle className="w-5 h-5 text-green-600" />}
-                        {showResults && userAnswer === optIdx && userAnswer !== q.correctIndex && <XCircle className="w-5 h-5 text-red-600" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              
-              {showResults && q.explanation && (
-                <div className="mt-4 ml-12 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
-                  <strong>Explanation:</strong> {q.explanation}
-                </div>
-              )}
+        <div className="flex justify-between items-end mb-2">
+            <div>
+                <h2 className="text-xl font-bold text-slate-800">{title}</h2>
+                {subTitle && <p className="text-sm text-slate-500">{subTitle}</p>}
             </div>
-          );
-        })}
+            <span className="text-sm font-medium text-slate-400">
+                {currentInfoIndex + 1} / {questions.length}
+            </span>
+        </div>
+        <div className="w-full bg-slate-100 rounded-full h-2">
+            <div 
+                className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }}
+            />
+        </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 flex justify-center z-10">
-        <button
-          onClick={handleSubmit}
-          disabled={!allAnswered || showResults || isSubmitting}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all w-full max-w-md justify-center"
+      {/* Question Card */}
+      <div className="flex-1 flex flex-col justify-center animate-fade-in">
+        <h3 className="text-2xl font-medium text-slate-900 mb-8 leading-snug">
+            {currentQuestion.question}
+        </h3>
+
+        <div className="space-y-3">
+            {currentQuestion.options?.map((opt, idx) => {
+                const isSelected = answers[currentQuestion.id] === idx;
+                return (
+                    <button
+                        key={idx}
+                        onClick={() => setAnswers(prev => ({ ...prev, [currentQuestion.id]: idx }))}
+                        className={`w-full text-left p-5 rounded-xl border-2 transition-all flex items-center justify-between group
+                            ${isSelected 
+                                ? 'border-indigo-600 bg-indigo-50 text-indigo-900' 
+                                : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50 text-slate-700'}
+                        `}
+                    >
+                        <span className="font-medium text-lg">{opt}</span>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                            ${isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 group-hover:border-indigo-300'}
+                        `}>
+                            {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                        </div>
+                    </button>
+                );
+            })}
+        </div>
+      </div>
+
+      {/* Footer Navigation */}
+      <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center">
+        <button 
+            onClick={() => setCurrentInfoIndex(prev => Math.max(0, prev - 1))}
+            disabled={currentInfoIndex === 0}
+            className="text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 font-medium"
         >
-          {isSubmitting ? "Analyzing..." : showResults ? "Processing..." : "Submit Answers"}
-          {!isSubmitting && !showResults && <ArrowRight className="w-5 h-5" />}
+            <ArrowLeft className="w-4 h-4" /> Previous
+        </button>
+
+        <button
+            onClick={handleNext}
+            disabled={!hasAnsweredCurrent}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed transition-all flex items-center gap-2"
+        >
+            {currentInfoIndex === questions.length - 1 ? 'Review Answers' : 'Next Question'}
+            <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>

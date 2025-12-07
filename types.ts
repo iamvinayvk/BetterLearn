@@ -1,9 +1,10 @@
 // Enums
 export enum AppView {
-  WELCOME = 'WELCOME',
+  HOME = 'HOME', // New Dashboard for multiple paths
+  CREATE_PATH = 'CREATE_PATH', // The old Welcome Screen
   DIAGNOSTIC = 'DIAGNOSTIC',
-  PLANNING = 'PLANNING', // Loading state while plan is generated
-  DASHBOARD = 'DASHBOARD',
+  PLANNING = 'PLANNING',
+  PATH_DASHBOARD = 'PATH_DASHBOARD', // Specific path view
   CHAPTER = 'CHAPTER'
 }
 
@@ -92,4 +93,22 @@ export interface UserState {
   goal: string;
   contextImage?: string; // Base64
   contextText?: string;
+}
+
+// New Types for Multi-path and Gamification
+export interface LearningPath {
+  id: string;
+  topic: string;
+  createdAt: number;
+  lastAccessedAt: number;
+  userState: UserState;
+  plan: LearningPlan;
+  progress: number; // 0-100
+}
+
+export interface DailyStats {
+  streakDays: number;
+  chaptersCompletedToday: number;
+  totalXp: number;
+  lastLoginDate: string;
 }

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { UserState } from '../types';
-import { Loader2, Upload, BookOpen } from 'lucide-react';
+import { Loader2, Upload, BookOpen, ArrowLeft } from 'lucide-react';
 
 interface Props {
   onStart: (userState: UserState) => void;
+  onCancel?: () => void;
   isProcessing: boolean;
+  showCancel?: boolean;
 }
 
-export const WelcomeScreen: React.FC<Props> = ({ onStart, isProcessing }) => {
+export const WelcomeScreen: React.FC<Props> = ({ onStart, onCancel, isProcessing, showCancel }) => {
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState('Beginner');
   const [goal, setGoal] = useState('Fundamentals');
@@ -33,13 +35,22 @@ export const WelcomeScreen: React.FC<Props> = ({ onStart, isProcessing }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full p-6 animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-full p-6 animate-fade-in relative">
+      {showCancel && (
+        <button 
+          onClick={onCancel}
+          className="absolute top-6 left-6 flex items-center text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" /> Back to Dashboard
+        </button>
+      )}
+
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
             <BookOpen className="w-8 h-8 text-indigo-600" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">CurioLoop</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Better Learn</h1>
           <p className="text-slate-500">Turn any word into a personalized learning journey.</p>
         </div>
 
@@ -51,7 +62,7 @@ export const WelcomeScreen: React.FC<Props> = ({ onStart, isProcessing }) => {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g. Quantum Physics, React Hooks, French Revolution"
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-black font-medium"
             />
           </div>
 
@@ -61,7 +72,7 @@ export const WelcomeScreen: React.FC<Props> = ({ onStart, isProcessing }) => {
               <select 
                 value={level} 
                 onChange={(e) => setLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black"
               >
                 <option>Beginner</option>
                 <option>Intermediate</option>
@@ -73,7 +84,7 @@ export const WelcomeScreen: React.FC<Props> = ({ onStart, isProcessing }) => {
               <select 
                 value={goal} 
                 onChange={(e) => setGoal(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black"
               >
                 <option>Fundamentals</option>
                 <option>Exam Prep</option>
